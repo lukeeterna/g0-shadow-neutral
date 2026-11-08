@@ -1,0 +1,174 @@
+# G0-SHADOW SPEC-001 V1.2 - STATIC REVIEW ONLY. DO NOT DEPLOY OR DISPATCH.
+# GitHub target (future, separate Owner approval):
+# lukeeterna/g0-shadow-neutral/.github/workflows/g0-shadow-spec001.yml
+name: G0-SHADOW SPEC-001 integrity and scoped receipt (REVIEW ONLY)
+'on':
+  workflow_dispatch:
+    inputs:
+      scenario:
+        description: Owner-approved positive or negative test (separate dispatch mandates)
+        required: true
+        type: choice
+        options: [positive, negative]
+      expected_head_sha:
+        description: Pinned Owner-approved triggering commit SHA (40 lowercase hex)
+        required: true
+        type: string
+      expected_workflow_sha:
+        description: Pinned Owner-approved workflow source commit SHA (40 lowercase hex)
+        required: true
+        type: string
+      expected_payload_sha256:
+        description: Frozen expected correct payload digest (64 lowercase hex)
+        required: true
+        type: string
+      owner_nonce:
+        description: Fresh public challenge; 32-64 lowercase hex; uniqueness externally verified
+        required: true
+        type: string
+permissions: {}
+concurrency:
+  group: g0-shadow-spec001-integrity
+  cancel-in-progress: false
+jobs:
+  integrity-receipt:
+    if: ${{ github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Bind GitHub context, check byte integrity and print JSON receipt
+        shell: bash
+        env:
+          G0_SCENARIO: ${{ inputs.scenario }}
+          EXPECTED_HEAD_SHA: ${{ inputs.expected_head_sha }}
+          EXPECTED_WORKFLOW_SHA: ${{ inputs.expected_workflow_sha }}
+          EXPECTED_PAYLOAD_SHA256: ${{ inputs.expected_payload_sha256 }}
+          OWNER_NONCE: ${{ inputs.owner_nonce }}
+        run: |
+          set -Eeuo pipefail
+          export LC_ALL=C
+          python3 - <<'PYCODE'
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import platform
+          import re
+          import subprocess
+          import sys
+          import tempfile
+
+          REPO = "lukeeterna/g0-shadow-neutral"
+          REPO_ID = "1448230849"
+          WORKFLOW_REF = REPO + "/.github/workflows/g0-shadow-spec001.yml@refs/heads/main"
+          GOOD_PAYLOAD = b"G0-SHADOW-V1\n"
+          GOOD_SHA = "e76256dbaf0002b9520f4711f952a2a8e88f0a137d00d2f537fcda07aed9bcaf"
+          BAD_SHA = "d8253bc2c418a8f16767e652fc1c049e6599e786026fea2c66a4887c5e149b3f"
+
+          def get(key):
+              return os.environ.get(key, "")
+
+          def stop(code):
+              print("G0_SPEC001_FINAL_STATUS=STOP_" + code, flush=True)
+              raise SystemExit(20)
+
+          def require(key, value, reason):
+              if get(key) != value:
+                  stop(reason)
+
+          require("GITHUB_ACTIONS", "true", "NOT_ACTIONS")
+          require("RUNNER_ENVIRONMENT", "github-hosted", "NOT_HOSTED_CLAIM")
+          require("RUNNER_OS", "Linux", "NOT_LINUX_CLAIM")
+          if platform.system() != "Linux":
+              stop("NOT_LINUX_KERNEL")
+          if os.geteuid() == 0:
+              stop("ROOT_JOB")
+          require("GITHUB_EVENT_NAME", "workflow_dispatch", "WRONG_EVENT")
+          require("GITHUB_REPOSITORY", REPO, "WRONG_REPOSITORY")
+          require("GITHUB_REPOSITORY_ID", REPO_ID, "WRONG_REPOSITORY_ID")
+          require("GITHUB_REF", "refs/heads/main", "WRONG_REF")
+          require("GITHUB_WORKFLOW_REF", WORKFLOW_REF, "WRONG_WORKFLOW_REF")
+          require("GITHUB_RUN_ATTEMPT", "1", "REPEAT_ATTEMPT")
+          if not re.fullmatch(r"[1-9][0-9]*", get("GITHUB_RUN_ID")):
+              stop("INVALID_RUN_ID")
+          if not re.fullmatch(r"[0-9a-f]{40}", get("EXPECTED_HEAD_SHA")):
+              stop("INVALID_EXPECTED_HEAD")
+          if not re.fullmatch(r"[0-9a-f]{40}", get("EXPECTED_WORKFLOW_SHA")):
+              stop("INVALID_EXPECTED_WORKFLOW")
+          require("GITHUB_SHA", get("EXPECTED_HEAD_SHA"), "HEAD_MISMATCH")
+          require("GITHUB_WORKFLOW_SHA", get("EXPECTED_WORKFLOW_SHA"), "WORKFLOW_SHA_MISMATCH")
+          if not re.fullmatch(r"[0-9a-f]{32,64}", get("OWNER_NONCE")):
+              stop("INVALID_NONCE")
+          if not re.fullmatch(r"[0-9a-f]{64}", get("EXPECTED_PAYLOAD_SHA256")):
+              stop("INVALID_EXPECTED_PAYLOAD_SHA")
+          require("EXPECTED_PAYLOAD_SHA256", GOOD_SHA, "OWNER_HASH_NOT_FROZEN_VALUE")
+          if hashlib.sha256(GOOD_PAYLOAD).hexdigest() != GOOD_SHA:
+              stop("SOURCE_FIXTURE_SHA_MISMATCH")
+          scenario = get("G0_SCENARIO")
+          if scenario not in ("positive", "negative"):
+              stop("UNKNOWN_SCENARIO")
+          tmp = get("RUNNER_TEMP")
+          if not tmp.startswith("/") or not pathlib.Path(tmp).is_dir():
+              stop("RUNNER_TEMP_NOT_AVAILABLE")
+
+          os.umask(0o077)
+          with tempfile.TemporaryDirectory(prefix="g0spec001-", dir=tmp) as temp_dir:
+              file = pathlib.Path(temp_dir) / "payload.bin"
+              payload = GOOD_PAYLOAD + (b"X" if scenario == "negative" else b"")
+              with file.open("xb") as fh:
+                  fh.write(payload)
+              actual_bytes = file.read_bytes()
+              actual_sha_python = hashlib.sha256(actual_bytes).hexdigest()
+              try:
+                  sensor = subprocess.run(
+                      ["/usr/bin/sha256sum", "--", str(file)],
+                      capture_output=True, timeout=5, check=False,
+                  )
+              except (OSError, subprocess.TimeoutExpired):
+                  stop("ORIGINAL_SHA256SUM_UNAVAILABLE")
+              expected_line = (actual_sha_python + "  " + str(file) + "\n").encode("ascii")
+              if sensor.returncode != 0 or sensor.stderr or sensor.stdout != expected_line:
+                  stop("MEASUREMENT_TOOL_DISAGREEMENT")
+              actual_len = len(actual_bytes)
+
+          if scenario == "positive":
+              if actual_len != 13 or actual_sha_python != GOOD_SHA:
+                  stop("POSITIVE_INTEGRITY_FAILURE")
+              result_status = "PASS_SCOPED_HOSTED_CLAIM"
+              exit_code = 0
+          else:
+              if actual_len != 14 or actual_sha_python != BAD_SHA or actual_sha_python == GOOD_SHA:
+                  stop("NEGATIVE_NOT_EXACT_ONE_BYTE_MUTATION")
+              result_status = "EXPECTED_INTEGRITY_REJECTION"
+              exit_code = 42
+
+          receipt = {
+              "schema": "G0_SHADOW_SPEC001_V1_2_CANDIDATE_RECEIPT",
+              "status": result_status,
+              "scenario": scenario,
+              "repository": REPO,
+              "repository_id": REPO_ID,
+              "head_sha": get("GITHUB_SHA"),
+              "workflow_sha": get("GITHUB_WORKFLOW_SHA"),
+              "workflow_ref": get("GITHUB_WORKFLOW_REF"),
+              "run_id": get("GITHUB_RUN_ID"),
+              "run_attempt": get("GITHUB_RUN_ATTEMPT"),
+              "runner_environment_claim": get("RUNNER_ENVIRONMENT"),
+              "runner_os_claim": get("RUNNER_OS"),
+              "kernel_os_observed": platform.system(),
+              "uid_observed": os.geteuid(),
+              "owner_public_nonce": get("OWNER_NONCE"),
+              "expected_sha256": GOOD_SHA,
+              "observed_sha256": actual_sha_python,
+              "payload_bytes": actual_len,
+              "sensor_sha256sum_agrees": True,
+              "effect_authority": "NONE",
+              "independent_hardware_attestation": "NOT_PROVEN",
+              "production_go": False,
+          }
+          raw = (json.dumps(receipt, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+          print("G0_SPEC001_RECEIPT_JSON=" + raw.decode("utf-8").rstrip("\n"), flush=True)
+          print("G0_SPEC001_RECEIPT_SHA256=" + hashlib.sha256(raw).hexdigest(), flush=True)
+          print("G0_SPEC001_FINAL_STATUS=" + result_status, flush=True)
+          raise SystemExit(exit_code)
+          PYCODE
