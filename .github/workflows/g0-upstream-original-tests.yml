@@ -1,0 +1,100 @@
+# G0-SHADOW: external upstream original tests on an ephemeral GitHub-hosted runner.
+# This workflow DOES NOT invoke a local iMac worker, deliver a VOS mandate, or certify the E2E loop.
+# No secrets, no artifacts containing credentials, no direct pushes/merges/deploys.
+name: G0-SHADOW upstream original tests (cloud qualification only)
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/g0-upstream-original-tests.yml'
+permissions: {}
+concurrency:
+  group: g0-upstream-original-tests-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  original-upstream-tests:
+    if: github.event.pull_request.head.repo.full_name == 'lukeeterna/g0-shadow-neutral'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      UPSTREAM_REPO: https://github.com/SWE-agent/mini-swe-agent.git
+      UPSTREAM_COMMIT: 04d809ceab9df28f9adaed044884180159172930
+      PIP_DISABLE_PIP_VERSION_CHECK: '1'
+      PIP_NO_INPUT: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - name: Provenance and isolated hosted environment
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          printf 'G0_RUNNER_CLASS=GITHUB_HOSTED_NOT_IMAC\n'
+          printf 'G0_REPO=%s\n' "$GITHUB_REPOSITORY"
+          printf 'G0_EVENT=%s\n' "$GITHUB_EVENT_NAME"
+          printf 'G0_STARTED_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          printf 'G0_UPSTREAM_SHA=%s\n' "$UPSTREAM_COMMIT"
+          test "$RUNNER_ENVIRONMENT" = github-hosted || exit 20
+          test "$GITHUB_REPOSITORY" = lukeeterna/g0-shadow-neutral || exit 20
+          test "$GITHUB_EVENT_NAME" = pull_request || exit 20
+          test "$GITHUB_RUN_ATTEMPT" = 1 || exit 20
+          python3 --version
+      - name: Fetch exact original upstream revision (no checkout action, no token)
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          umask 077
+          git init -q "$RUNNER_TEMP/mini-upstream"
+          git -C "$RUNNER_TEMP/mini-upstream" remote add origin "$UPSTREAM_REPO"
+          git -C "$RUNNER_TEMP/mini-upstream" -c credential.helper= fetch --no-tags --depth=1 origin "$UPSTREAM_COMMIT"
+          git -C "$RUNNER_TEMP/mini-upstream" checkout -q --detach FETCH_HEAD
+          test "$(git -C "$RUNNER_TEMP/mini-upstream" rev-parse HEAD)" = "$UPSTREAM_COMMIT" || exit 20
+          printf 'G0_UPSTREAM_EXACT_COMMIT=PASS\n'
+      - name: Verify original code and original negative-finding tests exist
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          cd "$RUNNER_TEMP/mini-upstream"
+          python3 - <<'PY'
+          import ast, pathlib
+          root = pathlib.Path('.')
+          code = (root/'src/minisweagent/environments/local.py').read_text()
+          agent = (root/'src/minisweagent/agents/default.py').read_text()
+          tests = (root/'tests/environments/test_local.py').read_text()
+          ast.parse(code); ast.parse(agent); ast.parse(tests)
+          assert 'shell=True' in code, 'original local execution model changed'
+          assert 'os.environ | self.config.env' in code, 'original inherited-env behavior changed'
+          assert 'cost_limit: float = 3.0' in agent, 'original default cost setting changed'
+          assert '0 < self.config.cost_limit <= self.cost' in agent, 'original zero-cost behavior changed'
+          assert 'def test_local_environment_existing_env_variables' in tests
+          print('G0_ORIGINAL_LOCAL_SHELL_ACCESS=OBSERVED_IN_SOURCE')
+          print('G0_ORIGINAL_INHERITED_ENV=OBSERVED_IN_SOURCE')
+          print('G0_COST_LIMIT_ZERO_GUARD=DISABLED_IN_ORIGINAL_SOURCE')
+          print('G0_PRODUCTION_ELIGIBILITY=STOP_NOT_ISOLATED')
+          PY
+      - name: Install upstream exactly as packaged and its original test dependencies
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          python3 -m venv "$RUNNER_TEMP/g0-venv"
+          . "$RUNNER_TEMP/g0-venv/bin/activate"
+          cd "$RUNNER_TEMP/mini-upstream"
+          python -m pip install --disable-pip-version-check -e . pytest pytest-asyncio
+          printf 'G0_UPSTREAM_PACKAGE_INSTALL=PASS\n'
+      - name: Run ORIGINAL upstream agent and local-environment tests
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          . "$RUNNER_TEMP/g0-venv/bin/activate"
+          cd "$RUNNER_TEMP/mini-upstream"
+          printf 'G0_ORIGINAL_TEST_START_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          python -m pytest -q tests/agents/test_default.py tests/environments/test_local.py tests/run/test_local.py
+          printf 'G0_ORIGINAL_TESTS=PASS_HOSTED_ONLY\n'
+          printf 'G0_ORIGINAL_TEST_END_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      - name: Terminal scope marker
+        if: always()
+        shell: bash
+        run: |
+          printf 'G0_SCOPE=UPSTREAM_ORIGINAL_TESTS_ONLY\n'
+          printf 'G0_VOS_INGRESS=NOT_RUN\nG0_LOCAL_WORKER=NOT_RUN\nG0_INDEPENDENT_JUDGE=NOT_RUN\n'
+          printf 'G0_LOCAL_BENCHMARK=NOT_RUN\nG0_FRONTIER_TRIGGER=NOT_RUN\n'
+          printf 'G0_ADDITIONAL_PAID_API_CALLS=0\nG0_PRODUCTION_EFFECTS=NONE\n'
+          printf 'G0_FINISHED_UTC=%s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"

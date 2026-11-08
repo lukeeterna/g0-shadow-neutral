@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "mandate_id": "G0-SHADOW-PREFLIGHT-20261108-001",
+  "project_id": "g0-shadow-neutral",
+  "base_sha": "4918568f03feaef0444f009be12112af077f78a524c19853aae7bc3920b199d1",
+  "source_kind": "FRONTIER_CHATGPT",
+  "source_ref": "github://lukeeterna/g0-shadow-neutral/commit/3122adada48afab564362e5d1c4f6238490f0193 (base_sha derivation documented in experiments/G0-SHADOW-PREFLIGHT-20261108-001/PROVENANCE.md)",
+  "authorization_ref": "owner-conversation-shadow-preflight-2026-11-08-no-effects",
+  "data_class": "PUBLIC",
+  "objective": "Read-only shadow qualification on the physical iMac of the existing VOS cloud bridge and local Ollama runtime. Record provenance-bound UTC and monotonic timestamps, bridge sync sequence before/after, machine/CPU/RAM/swap observations and Ollama eval_count/eval_duration/load_duration/total_duration in idle and explicitly bounded local-load phases. No code generation, hosted runner substitution, automated merge, production impact or new installed component.",
+  "acceptance_criteria": [
+    "Validate this exact JSON with the upstream VOS frontier_inbox and mandate v1 schema; store exact SHA-256 of normalized mandate.",
+    "Verify actual physical iMac identity and actual installed bridge signature, configuration and launchd status before any load; absence of physical evidence is STOP, not PASS.",
+    "Verify the shadow project is attached under the original VOS contract and a matching immutable plan exists; otherwise record WAITING_PROJECT or WAITING_PLAN.",
+    "Capture for each phase >=5 UTC timestamps and corresponding monotonic clock readings and bridge control_sync sequence/synced_at_utc values; never substitute synthetic measurements.",
+    "Measure idle and model-load CPU, memory and swap using read-only macOS diagnostics; obtain Ollama actual eval_count/eval_duration/total_duration from localhost only and compute tokens/s from eval_duration.",
+    "Estimate incremental electrical consumption only if independently measured wattage is provided; otherwise report ENERGY_KWH=UNKNOWN, not 0.",
+    "Check that bridge persists exact mandate once and detects changed replay; no worker authorization, repo write, deployment, workflow dispatch or production effect.",
+    "Produce a provenance-bound receipt identifying all NOT_RUN and STOP gates, control commit, VOS runtime revision, worker model digest if used, cost and wall-clock latencies."
+  ],
+  "protected_paths": [
+    ".github/workflows",
+    "README.md",
+    "experiments/G0-FRONTIER-LOCAL-20261108-001/mandate.json"
+  ],
+  "allowed_effects": [],
+  "target_state": "VERIFIED",
+  "max_cost_usd": 0
+}
