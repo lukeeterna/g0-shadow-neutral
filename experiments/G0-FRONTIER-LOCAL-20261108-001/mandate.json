@@ -1,0 +1,68 @@
+{
+  "schema": "G0_SHADOW_FRONTIER_CHALLENGE_V1",
+  "mandate_id": "G0-FRONTIER-LOCAL-20261108-001",
+  "purpose": "Unassisted proof: Frontier -> VOS -> local free worker -> independent Judge -> GitHub PR -> Frontier",
+  "source_kind": "FRONTIER_CHATGPT",
+  "source_ref": "Owner-approved shadow test, ChatGPT conversation on 2026-11-08",
+  "source_git_repo": "lukeeterna/g0-shadow-neutral",
+  "source_git_base_sha": "3122adada48afab564362e5d1c4f6238490f0193",
+  "authorization_scope": "SHADOW_ONLY_NO_PRODUCTION_NO_LIVE_EFFECTS",
+  "ingress_state": "NOT_SUBMITTED_TO_VOS",
+  "execution_state": "WAITING_LOCAL_DEVICE_CONNECTIVITY",
+  "data_class": "PUBLIC",
+  "max_cost_usd": 0,
+  "api_paid_fallback": false,
+  "target_state": "VERIFIED",
+  "project_id": "g0-shadow-neutral",
+  "objective": "A genuinely local, free coding worker—not ChatGPT—must implement inventory_delta.py in an isolated disposable workspace. It must expose inventory_changes(before_csv: str, after_csv: str) -> dict using only Python 3.8+ standard library. Each CSV has the exact header sku,quantity. Strip ASCII whitespace around SKUs, uppercase ASCII SKUs, and parse non-negative base-10 integer quantities. Reject empty SKUs, duplicates after normalization, extra or missing columns, invalid integers, and malformed CSV with ValueError. Return {'changes': [{'sku': S, 'before': B, 'after': A, 'delta': A-B}, ...]}, sorted by sku, including only nonzero deltas; missing SKUs mean quantity 0. No filesystem, shell, network, secret, or production effects from the submitted function.",
+  "acceptance_criteria": [
+    "A genuine locally executed model, identified by model digest, generates the source patch without ChatGPT supplying implementation code.",
+    "The exact starting git SHA and all changed blob SHA values are recorded; no protected path changes.",
+    "An independent deterministic Judge executes its own tests on real original worker output; positive normal cases and malformed/duplicate/negative cases are covered.",
+    "The Judge proves it rejects at least one independently mutated or deliberately incorrect candidate and records the negative test result.",
+    "VOS records immutable task identity, worker and Judge receipts, bounded retries, and no duplicate execution after replay/restart.",
+    "Only after deterministic verification may a GitHub draft PR containing the worker-generated patch be opened; neither merge nor deploy is allowed.",
+    "A separate Frontier review reads the actual PR and Judge evidence without owner copy/paste and issues a documented decision.",
+    "Additional paid/API cost is exactly 0; quotas, runtime or billing uncertainty fail closed."
+  ],
+  "protected_paths": [
+    ".github/workflows",
+    "README.md",
+    "experiments/G0-FRONTIER-LOCAL-20261108-001/mandate.json"
+  ],
+  "allowed_effects": [
+    "REPOSITORY_WRITE_FOR_VERIFIED_DRAFT_PR_ONLY"
+  ],
+  "explicitly_denied": [
+    "GitHub Actions workflow_dispatch of existing G0-SHADOW SPEC-001",
+    "Automatic merge, release, deploy, production restart, external messages, credential disclosure",
+    "GitHub-hosted worker substituted for a physical/local worker",
+    "Assistant-produced implementation patch substituted for local-model output",
+    "Declaring PASS based on static review, simulated Judge, mocked hardware, or unverified provider/model claims"
+  ],
+  "execution_limits": {
+    "max_attempts": 2,
+    "local_worker_concurrency": 1,
+    "network_requests_from_task": 0,
+    "requires_independent_judge": true
+  },
+  "required_receipt_fields": [
+    "VOS_TASK_ID",
+    "SOURCE_GIT_SHA",
+    "MANDATE_SHA256",
+    "DEVICE_ID",
+    "LOCAL_MODEL_DIGEST",
+    "LOCAL_MODEL_TOKENS_PER_SECOND",
+    "WORKER_SOURCE_SHA256",
+    "JUDGE_IMPLEMENTATION_SHA256",
+    "ORIGINAL_TESTS",
+    "NEGATIVE_DIFFERENTIAL_TESTS",
+    "REPLAY_NO_DUPLICATE",
+    "PR_URL",
+    "FRONTIER_REVIEW_REF",
+    "FOUNDER_PROMPT_SHUTTLING",
+    "ADDITIONAL_API_COST_USD",
+    "PRODUCTION_EFFECTS"
+  ],
+  "evidence_policy": "UNKNOWN/NOT_RUN/STOP until physical execution and exact readback. This file is a challenge, NOT a VOS-accepted mandate and NOT an Owner-signed authority."
+}
