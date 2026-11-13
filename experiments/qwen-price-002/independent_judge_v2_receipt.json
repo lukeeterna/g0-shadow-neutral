@@ -1,0 +1,18 @@
+{
+  "frozen_judge_v2_sha256": "c6274b64f63503796eb70d92851c62373698db3a25d73b80c30da815a0c839fa",
+  "full_automation": "NOT_CERTIFIED",
+  "functional_tests_original_unchanged": 16,
+  "independent_physical_judge": true,
+  "judge_host": "MacBookPro11,1 macOS11.7.11 Python3.8.9",
+  "judge_log_sha256": "2d2cc09a860e0346e715a71c9282cce012a1f74f3abc12aec1f4db6168af4a06",
+  "judge_v1_policy_defect_corrected_in_v2": true,
+  "manual_product_code_fixes": 0,
+  "model": "qwen2.5-coder:1.5b",
+  "production": "NO_GO",
+  "runner_exit": 1,
+  "schema": "VOS_QWEN_LOCAL_WORKER_MACBOOK_JUDGE_V2",
+  "source_author": "LOCAL_QWEN_MODEL_NOT_BOSS",
+  "source_sha256": "d19c2372f2652e26cb7ec8061045bf793c183f014ef1b280adce4238ffc8f9df",
+  "status": "FAIL_CLOSED",
+  "utc": "2026-11-13T12:40:43.506252+00:00"
+}
