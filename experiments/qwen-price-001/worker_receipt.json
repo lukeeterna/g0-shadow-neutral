@@ -1,0 +1,19 @@
+{
+  "eval_count": 118,
+  "eval_duration_ns": 15053159040,
+  "generation_seconds": 41.444,
+  "harness": "BOUNDED_OLLAMA_REST_GENERATION_ONLY",
+  "human_source_edits": 0,
+  "judge": "PENDING_INDEPENDENT_MACBOOK",
+  "mandate_sha256": "f48ce99c63b12ed14e10eda01a93726af97a57ef5bf0e3aa82f2278d5a300c52",
+  "model": "qwen2.5-coder:1.5b",
+  "no_api_cost_usd": 0,
+  "num_predict_cap": 700,
+  "product_code_author": "LOCAL_QWEN_MODEL",
+  "production_effects": false,
+  "prompt_eval_count": 374,
+  "schema": "VOS_LOCAL_QWEN_REAL_WORKER_001",
+  "source_sha256": "7afed067b243a38bd7510c8816dd5972587df48f9694aa7d2afc30aa33c4a1d0",
+  "temperature": 0,
+  "utc": "2026-11-13T12:31:04.518481+00:00"
+}
