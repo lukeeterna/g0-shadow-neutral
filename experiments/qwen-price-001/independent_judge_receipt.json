@@ -1,0 +1,18 @@
+{
+  "commercial_production": "NO",
+  "frozen_judge_sha256": "19ee0108b40a0623ca0c7b08063f1c44e352cca8d04ccd3990de6411201d7921",
+  "judge_returncode": 1,
+  "judge_status": "FAIL_CLOSED",
+  "judge_test_count": 16,
+  "log_sha256": "5ad638d32fe2f51e51c1201278665d04ab122546c4f24bebfd3c516912de0292",
+  "machine": "MacBookPro11,1",
+  "manual_code_edits": 0,
+  "max_cost_usd": 0,
+  "owner_manual_transfer": 0,
+  "python": "3.8.9",
+  "schema": "VOS_QWEN_LOCAL_WORKER_INDEPENDENT_MACBOOK_JUDGE_V1",
+  "source_author": "LOCAL_QWEN_MODEL_NOT_BOSS",
+  "source_sha256": "7afed067b243a38bd7510c8816dd5972587df48f9694aa7d2afc30aa33c4a1d0",
+  "utc": "2026-11-13T12:32:00.041076+00:00",
+  "worker_model": "qwen2.5-coder:1.5b"
+}
