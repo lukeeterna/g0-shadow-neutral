@@ -1,0 +1,14 @@
+{
+  "additional_cost_usd": 0,
+  "elapsed_seconds": 52.301,
+  "human_source_changes": 0,
+  "independent_judge": "PENDING",
+  "mandate_sha256": "bfc85b83c4a1fc0cb2cc4eea8ce4bc387d2ea9c50778c603af312dcc81470889",
+  "model": "qwen2.5-coder:1.5b",
+  "model_eval_duration_ns": 24673492712,
+  "model_tokens": 136,
+  "schema": "LOCAL_QWEN_REAL_WORKER_V2",
+  "source_author": "LOCAL_QWEN_NOT_BOSS",
+  "source_sha256": "d19c2372f2652e26cb7ec8061045bf793c183f014ef1b280adce4238ffc8f9df",
+  "utc": "2026-11-13T12:40:18.069679+00:00"
+}
