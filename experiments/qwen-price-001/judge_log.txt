@@ -1,0 +1,17 @@
+
+ERROR
+
+======================================================================
+ERROR: setUpClass (__main__.FrozenPriceJudge)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/macbook/Documents/VOS-LOCAL-QWEN-PUBLISH-001-JUDGE-20261113/acceptance.py", line 45, in setUpClass
+    cls.code_sha256 = _static_gate()
+  File "/Users/macbook/Documents/VOS-LOCAL-QWEN-PUBLISH-001-JUDGE-20261113/acceptance.py", line 39, in _static_gate
+    raise RuntimeError("STOP_FORBIDDEN_FUNCTION_CALL")
+RuntimeError: STOP_FORBIDDEN_FUNCTION_CALL
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.002s
+
+FAILED (errors=1)
